@@ -11,7 +11,7 @@
 /*
  * This file contains macros for module 'hps_0' and devices
  * connected to the following master:
- *   h2f_axi_master
+ *   h2f_lw_axi_master
  * 
  * Do not include this header file and another header file created for a
  * different module or master group at the same time.
