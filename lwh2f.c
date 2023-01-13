@@ -2,13 +2,10 @@
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/interrupt.h>
+#include <linux/types.h>
 #include <asm/io.h>
 #include "hps.h"
 #include "hps_0.h"
-#include <stdio.h>
-#include <unistd.h>
-#include <stdint.h>
-#include "lwh2f.h"
 
 #define LWH2F_BASE ALT_LWFPGASLVS_ADDR
 #define LWH2F_SPAN ALT_LWFPGASLVS_UB_ADDR - ALT_LWFPGASLVS_LB_ADDR + 1
@@ -20,9 +17,9 @@
 
 static void *lwh2f_virtual_base = NULL;			//Virtual address of LWH2F bridge
 static void *pio_base = NULL;					//Virtual address of PIO port from FPGA
-static volatile uint16_t *pio_data = NULL;		//PIO data register
-static volatile uint16_t *pio_int_mask = NULL;	//PIO interrupt mask register
-static volatile uint16_t *pio_edge_capt = NULL;	//PIO edge caputre register
+static volatile u16 *pio_data = NULL;		//PIO data register
+static volatile u16 *pio_int_mask = NULL;	//PIO interrupt mask register
+static volatile u16 *pio_edge_capt = NULL;	//PIO edge caputre register
 
 static int __init lwh2f_init(void);
 static void lwh2f_exit(void);
@@ -31,7 +28,7 @@ module_init(lwh2f_init);
 module_exit(lwh2f_exit);
 
 irq_handler_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
-	uint16_t PIO_data = lwh2f_read();
+	u16 input_data = *pio_data;
 
 	*pio_edge_capt = 0xF;	//Clear interrupt condition
 
@@ -39,27 +36,28 @@ irq_handler_t irq_handler(int irq, void *dev_id, struct pt_regs *regs) {
 }
 
 static int __init lwh2f_init(void) {
-	lwh2f_virtual_base = ioremap_nocache(LWH2F_BASE, LWH2F_SPAN);
+	int int_req;
+
+	lwh2f_virtual_base = (void *)ioremap_nocache((resource_size_t)LWH2F_BASE, LWH2F_SPAN);
 
 	//Get virtual addresses of PIO port
 	pio_base = lwh2f_virtual_base + DATA_BUFFER_BASE;
 	pio_data = (volatile uint16_t *)(pio_base + PIO_DATA_OFST);
-	pio_int_mask = (volatile uint16_t *)(pio_base + PIO_INT_MASK_OFST)
+	pio_int_mask = (volatile uint16_t *)(pio_base + PIO_INT_MASK_OFST);
 	pio_edge_capt = (volatile uint16_t *)(pio_base + PIO_EDGE_CAPT_OFST);
 
 	//Setup PIO port
 	*pio_edge_capt = 0xF;	//Clear edge capture register
 	*pio_int_mask = 0xF;		//Enable interrupt on all input pins
 
-	int int_req = request_irq(PIO_IRQ, irq_handler, IRQF_SHARED,
-								"PIO_irq_handler", (void *)(irq_handler));
+	int_req = request_irq(PIO_IRQ, (irq_handler_t)irq_handler, IRQF_SHARED,
+								"PIO_irq_handler", (void *)irq_handler);
 	return int_req;
 }
 
-static void lwh2f_exit(void) {
+static void __exit lwh2f_exit(void) {
 	//Close LWH2F bridge
 	iounmap(lwh2f_virtual_base);
-	printf("Unmapped LWH2F hardware\n");
 
 	//Disable interrupt flag from PIO port
 	*pio_int_mask = 0;
@@ -71,9 +69,4 @@ static void lwh2f_exit(void) {
 	
 	//Free interrupt
 	free_irq(PIO_IRQ, (void*) irq_handler);
-}
-
-
-uint16_t lwh2f_read(void) {
-	return *data_base;
 }
