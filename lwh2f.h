@@ -5,6 +5,6 @@
 
 int lwh2f_init(void);
 int lwh2f_stop(void);
-uint16_t lwh2f_read(void);
+uint16_t lwh2f_poll(void);
 
 #endif //_LWH2F_H

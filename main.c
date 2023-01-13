@@ -13,9 +13,12 @@ int main(int argc, char **argv) {
 		count = strtol(argv[1], NULL, 10);
 
 	int i;
-	for (i = 0; i < count; i++) {
-		uint16_t temp = lwh2f_read();
-		printf("%u\n", temp);
+	while (i < count) {
+		uint16_t temp = lwh2f_poll();
+		if (temp < 4096) {
+			// printf("%u\n", temp);
+			i++;
+		}
 	}
 
 	if ( lwh2f_stop() == -1) {
