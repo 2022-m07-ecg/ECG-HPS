@@ -11,7 +11,7 @@
 /*
  * This file contains macros for module 'hps_0' and devices
  * connected to the following master:
- *   h2f_axi_master
+ *   h2f_lw_axi_master
  * 
  * Do not include this header file and another header file created for a
  * different module or master group at the same time.
@@ -29,7 +29,6 @@
 #define DATA_BUFFER_BASE 0x0
 #define DATA_BUFFER_SPAN 16
 #define DATA_BUFFER_END 0xf
-#define DATA_BUFFER_IRQ 0
 #define DATA_BUFFER_BIT_CLEARING_EDGE_REGISTER 0
 #define DATA_BUFFER_BIT_MODIFYING_OUTPUT_REGISTER 0
 #define DATA_BUFFER_CAPTURE 1
@@ -41,7 +40,7 @@
 #define DATA_BUFFER_HAS_IN 1
 #define DATA_BUFFER_HAS_OUT 0
 #define DATA_BUFFER_HAS_TRI 0
-#define DATA_BUFFER_IRQ_TYPE EDGE
+#define DATA_BUFFER_IRQ_TYPE NONE
 #define DATA_BUFFER_RESET_VALUE 0
 
 
