@@ -1,4 +1,5 @@
-TARGET = test
+TARGET = ecg
+OBJECTS = main.o lwh2f.o
 
 ALT_DEVICE_FAMILY ?= soc_cv_av
 SOCEDS_ROOT ?= $(SOCEDS_DEST_ROOT)
@@ -9,8 +10,8 @@ LDFLAGS = -g -Wall
 CC = $(CROSS_COMPILE)gcc
 ARCH = arm
 
-build: $(TARGET)
-$(TARGET): main.o lwh2f.o
+all: $(TARGET)
+$(TARGET): $(OBJECTS)
 	$(CC) $(LDFLAGS) $^ -o $@
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

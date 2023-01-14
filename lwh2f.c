@@ -31,16 +31,16 @@ static volatile uint16_t *pio_edge_capt = NULL;	//PIO edge caputre register
 int lwh2f_init(void) {
 	//Open file descpriptor to device memory
 	fd = open("/dev/mem", (O_RDWR | O_SYNC));
-	if (fd == -1) {
+	if (fd == -1) {	//Check if opened successfully
 		perror("Could not open memory device driver");
 		return -1;
 	}
 	printf("Opened memory device driver\n");
 
-	//Map LWH2F bridge to virtual memory
+	//Map virtual memmory addresses to LWH2F bridge hardware
 	lwh2f_virtual_base = mmap(NULL, LWH2F_SPAN, (PROT_READ | PROT_WRITE),
 								MAP_SHARED, fd, (off_t)LWH2F_BASE);
-	if (lwh2f_virtual_base == MAP_FAILED) {
+	if (lwh2f_virtual_base == MAP_FAILED) {	//Check if opened successfully
 		perror("Could not map LWH2F hardware");
 		if ( close(fd) == -1)
 			perror("Could not close memory device driver");
@@ -48,12 +48,14 @@ int lwh2f_init(void) {
 	}
 	printf("Mapped LWH2F hardware\n");
 
-	//Get virtual address for PIO
+	//Get virtual addresses for PIO
 	pio_base = lwh2f_virtual_base + DATA_BUFFER_BASE;
 	pio_data = (volatile uint16_t *)(pio_base + PIO_DATA_OFST);
 	pio_dir = (volatile uint16_t *)(pio_base + PIO_DIR_OFST);
 	pio_int_mask = (volatile uint16_t *)(pio_base + PIO_INT_MASK_OFST);
 	pio_edge_capt = (volatile uint16_t *)(pio_base + PIO_EDGE_CAPT_OFST);
+
+	//Initalize PIO register
 	*pio_dir = 0x0;			//Set data bits as input
 	*pio_int_mask = 0x0;	//Make sure interrupts are disabled
 	*pio_edge_capt = 1;		//Clear edge capture register
@@ -63,7 +65,7 @@ int lwh2f_init(void) {
 
 int lwh2f_stop(void) {
 	//Close memory
-	if (munmap(lwh2f_virtual_base, LWH2F_SPAN) == -1) {
+	if ( munmap(lwh2f_virtual_base, LWH2F_SPAN) == -1 ) {
 		perror("Could not unmap LWH2F hardware");
 		return -1;
 	}
@@ -76,7 +78,8 @@ int lwh2f_stop(void) {
 	pio_int_mask = NULL;
 	pio_edge_capt = NULL;
 	
-	if (close(fd) == -1) {
+	//Close device memory
+	if ( close(fd) == -1 ) {
 		perror("Could not close memory device driver");
 		return -1;
 	}
@@ -91,7 +94,7 @@ uint16_t lwh2f_poll(void) {
 	//Check for new data
 	if (*pio_edge_capt) {
 		*pio_edge_capt = 1;	//Clear edge capture register
-		result =  *pio_data & PIO_DATA_MASK;	//Read data 11:0
+		result = *pio_data & PIO_DATA_MASK;	//Read only bits 11:0
 	} else {
 		result = 4096;	//No new data available
 	}
