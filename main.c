@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 	while (i < count) {
 		uint16_t temp = lwh2f_poll();
 		if (temp < 4096) {
-			// printf("%u\n", temp);
+			printf("%04x\n", temp);
 			i++;
 		}
 	}
